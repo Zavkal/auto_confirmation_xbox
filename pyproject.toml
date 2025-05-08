@@ -5,7 +5,7 @@ description = ""
 authors = [
     {name = "Zavkal",email = "ivanovilya14122000@yandex.ru"}
 ]
-readme = "README.md"
+#readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "seleniumbase (>=4.38.0,<5.0.0)",

@@ -97,9 +97,14 @@ class SeleniumConfirmation:
                 WebDriverWait(self.driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
                 ).click() # - Версия Сани
+                try:
+                    WebDriverWait(self.driver, 3).until(
+                        ec.presence_of_element_located((By.ID, 'idA_PWD_SwitchToPassword'))
+                    ).click()
+                except Exception:
+                    pass
                 password_text = WebDriverWait(self.driver, 5).until(
-                    ec.presence_of_element_located((By.ID, 'passwordEntry'))
-                )  # Кнопка ввода пароля
+                    ec.presence_of_element_located((By.ID, 'passwordEntry')))  # Кнопка ввода пароля
                 password_text.click()
                 password_text.send_keys(password)
                 WebDriverWait(self.driver, 5).until(
@@ -123,13 +128,13 @@ class SeleniumConfirmation:
                             ec.element_to_be_clickable(
                                 (By.ID, 'iShowSkip'))).click() # После ввода пароля просит резерв почту
 
-                except TimeoutException:
+                except Exception:
                     pass
                 try:
                     WebDriverWait(self.driver, 5).until(
                         ec.element_to_be_clickable(
                             (By.ID, 'lightbox-cover'))).click()  # Просит аутентификацию
-                except TimeoutException:
+                except Exception:
                     error_data['error'] = 2
                     error_data['success'] = 'False'
                     send_result_message(error_data)
