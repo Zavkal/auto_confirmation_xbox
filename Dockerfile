@@ -1,20 +1,37 @@
 # Используем официальный Python образ как базовый
 FROM python:3.13-slim
 
-# Устанавливаем Poetry
-RUN pip install poetry
-
 # Создаем и устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файл pyproject.toml и poetry.lock
-COPY pyproject.toml poetry.lock* /app/
+# Устанавливаем system зависимости для Chrome/Chromium
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    gnupg \
+    unzip \
+    libglib2.0-0 \
+    libnss3 \
+    libgconf-2-4 \
+    libfontconfig1 \
+    libx11-6 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    fonts-liberation \
+    chromium \
+    && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем зависимости с помощью Poetry
-RUN poetry install --no-root --no-interaction
+COPY poetry.lock pyproject.toml ./
+RUN pip install poetry
+RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-root
 
-# Копируем остальные файлы (включая main.py)
-COPY main.py .
+# Копируем ВСЕ файлы проекта (включая модули)
+COPY . .
 
 # Указываем команду для запуска вашего приложения
-CMD ["poetry", "run", "python", "main.py"]
+CMD ["python", "main.py"]
