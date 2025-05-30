@@ -4,7 +4,7 @@ from config import RABBITMQ_QUEUE_REQUEST, parameters
 from rabbit.process_mq import process_message
 
 
-def rabbitmq_consumer():
+def rabbitmq_consumer() -> None:
     connection = pika.BlockingConnection(parameters)
     channel = connection.channel()
 

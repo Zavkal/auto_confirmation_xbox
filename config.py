@@ -1,3 +1,4 @@
+import logging
 import os
 import pika
 from dotenv import load_dotenv
@@ -15,5 +16,10 @@ parameters = pika.ConnectionParameters(
     host=RABBITMQ_HOST,
     port=5672,
     credentials=credentials
+)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 

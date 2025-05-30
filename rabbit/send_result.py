@@ -1,11 +1,13 @@
 import json
+import logging
 
 import pika
 
 from config import parameters, RABBITMQ_QUEUE_RESPONSE
 
+logger = logging.getLogger(__name__)
 
-def send_result_message(result_data):
+def send_result_message(result_data) -> None:
     connection = pika.BlockingConnection(parameters)
     channel = connection.channel()
 
@@ -21,5 +23,5 @@ def send_result_message(result_data):
         )
     )
 
-    print(f"[>] Отправил результат: {result_data}")
+    logger.info(f"[>] Отправил результат: {result_data}")
     connection.close()
