@@ -44,11 +44,16 @@ class SeleniumConfirmation:
         data['success'] = 'False'
         data['error'] = 10
         send_result_message(data)
-
-        self.driver.get('https://login.live.com/oauth20_remoteconnect.srf')
-        self.driver.find_element(By.ID, 'otc').send_keys(code)
-        self.driver.find_element(By.ID, 'idSIButton9').click()
-        time.sleep(10)
+        logger.error(f"Отправил код 10. {data}")
+        try:
+            self.driver.get('https://login.live.com/oauth20_remoteconnect.srf')
+            self.driver.find_element(By.ID, 'otc').send_keys(code)
+            self.driver.find_element(By.ID, 'idSIButton9').click()
+            time.sleep(10)
+        except Exception as exc:
+            logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
+            data['error'] = 9
+            send_result_message(data)
 
         try:
             self.new_site(
