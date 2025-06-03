@@ -75,7 +75,7 @@ class SeleniumConfirmation:
             #     logger.error(f"Ошибка при выполнении old_site: {exc}")
             #     error_data['error'] = 9
             #     error_data['success'] = 'False'
-            send_result_message(data)
+            # send_result_message(data)
             error_data['error'] = 9
             error_data['success'] = 'False'
             send_result_message(data)
