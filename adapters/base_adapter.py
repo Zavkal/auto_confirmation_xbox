@@ -65,17 +65,20 @@ class SeleniumConfirmation:
             )
         except Exception as exc:
             logger.error(f"Ошибка при выполнении new_site: {exc}")
-            try:
-                self.old_site(driver=self.driver,
-                              data=data,
-                              email=email,
-                              password=password,
-                              error_data=error_data)
-            except Exception as exc:
-                logger.error(f"Ошибка при выполнении old_site: {exc}")
-                error_data['error'] = 9
-                error_data['success'] = 'False'
-                send_result_message(data)
+            # try:
+            #     self.old_site(driver=self.driver,
+            #                   data=data,
+            #                   email=email,
+            #                   password=password,
+            #                   error_data=error_data)
+            # except Exception as exc:
+            #     logger.error(f"Ошибка при выполнении old_site: {exc}")
+            #     error_data['error'] = 9
+            #     error_data['success'] = 'False'
+            send_result_message(data)
+            error_data['error'] = 9
+            error_data['success'] = 'False'
+            send_result_message(data)
         finally:
             self.driver.quit()
 
