@@ -21,10 +21,11 @@ class SeleniumConfirmation:
     def __init__(self) -> None:
         self.options = ChromeOptions()
         self.options.add_argument('--incognito')
-        self.options.add_argument('--headless')
+        # self.options.add_argument('--headless')
         self.options.add_argument('--no-sandbox')
         self.options.add_argument("--disable-dev-shm-usage")
         self.options.add_argument('--disable-gpu')
+        self.options.add_argument('--lang=ru')
         self.user_data_dir = tempfile.mkdtemp()
         self.options.add_argument(f'--user-data-dir={self.user_data_dir}')
         self.driver = webdriver.Chrome(options=self.options)
@@ -102,7 +103,7 @@ class SeleniumConfirmation:
             driver.quit()
             return
         try:
-            driver.find_element(By.ID, "error")
+            driver.find_element(By.XPATH, "//*[contains(text(), \"Не удалось найти учетную запись Майкрософт\")]")
             error_data['error'] = 4
             error_data['success'] = 'False'
             send_result_message(error_data)
@@ -113,17 +114,20 @@ class SeleniumConfirmation:
             pass
 
         try:
-            WebDriverWait(driver, 5).until(
-                ec.element_to_be_clickable((By.XPATH, "//span[@role='button' and text()='Use your password']"))
+            WebDriverWait(driver, 3).until(
+                ec.presence_of_element_located((By.XPATH, "//*[text()='Другие способы входа']"))
             ).click()
+
         except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'Use your password': {exc}")
+            logger.error(f"Ошибка при повторном нажатии на кнопку 'Другие способы входа': {exc}")
+
+
         try:
             WebDriverWait(driver, 3).until(
-                ec.presence_of_element_located((By.XPATH, "//span[@role='button' and text()='Use your password']"))
+                ec.presence_of_element_located((By.XPATH, "//*[text()='Используйте свой пароль']"))
             ).click()
         except Exception as exc:
-            logger.error(f"Ошибка при повторном нажатии на кнопку 'Use your password': {exc}")
+            logger.error(f"Ошибка при повторном нажатии на кнопку 'Используйте свой пароль': {exc}")
         try:
             WebDriverWait(driver, 3).until(
                 ec.presence_of_element_located((By.ID, 'fui-CardHeader__header30'))
@@ -137,7 +141,7 @@ class SeleniumConfirmation:
         except Exception as exc:
             logger.error(f"Ошибка при нажатии на элемент 'idA_PWD_SwitchToPassword': {exc}")
         try:
-            if password == None:
+            if password is None:
                 raise Exception
             password_text = WebDriverWait(driver, 5).until(
                 ec.presence_of_element_located((By.ID, 'passwordEntry')))
@@ -147,6 +151,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
             ).click()
         except Exception as exc:
+            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
             driver.find_element(By.ID, "error")
             error_data['error'] = 3
             error_data['success'] = 'False'
@@ -155,15 +160,26 @@ class SeleniumConfirmation:
             return
 
         try:
-            driver.find_element(By.ID, "error")
-            error_data['error'] = 4
+            logger.error("Ошибка пароля")
+            driver.find_element(By.XPATH, "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
+            error_data['error'] = 3
             error_data['success'] = 'False'
             send_result_message(error_data)
             driver.quit()
             return
         except Exception as exc:
             logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
-            pass
+
+        try:
+            logger.error("Ошибка: Введенный код истек")
+            driver.find_element(By.XPATH, "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
+            error_data['error'] = 1
+            error_data['success'] = 'False'
+            send_result_message(error_data)
+            driver.quit()
+            return
+        except Exception as exc:
+            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
 
         try:
             # => Кнопка остаться в системе
