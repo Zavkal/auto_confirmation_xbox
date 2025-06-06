@@ -45,18 +45,12 @@ class SeleniumConfirmation:
         data['success'] = 'False'
         data['error'] = 10
         send_result_message(data)
-        logger.error(f"Отправил код 10. {data}")
+        logger.info(f"Отправил код 10. {data}")
         try:
             self.driver.get('https://login.live.com/oauth20_remoteconnect.srf')
             self.driver.find_element(By.ID, 'otc').send_keys(code)
             self.driver.find_element(By.ID, 'idSIButton9').click()
             time.sleep(10)
-        except Exception as exc:
-            logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
-            data['error'] = 9
-            send_result_message(data)
-
-        try:
             self.new_site(
                 driver=self.driver,
                 data=data,
@@ -65,10 +59,12 @@ class SeleniumConfirmation:
                 error_data=error_data,
             )
         except Exception as exc:
-            logger.error(f"Ошибка при выполнении new_site: {exc}")
+            logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
             error_data['error'] = 9
-            error_data['success'] = 'False'
-            send_result_message(data)
+            send_result_message(error_data)
+            self.driver.quit()
+            return
+
         finally:
             self.driver.quit()
 
