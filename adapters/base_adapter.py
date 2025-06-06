@@ -66,17 +66,6 @@ class SeleniumConfirmation:
             )
         except Exception as exc:
             logger.error(f"Ошибка при выполнении new_site: {exc}")
-            # try:
-            #     self.old_site(driver=self.driver,
-            #                   data=data,
-            #                   email=email,
-            #                   password=password,
-            #                   error_data=error_data)
-            # except Exception as exc:
-            #     logger.error(f"Ошибка при выполнении old_site: {exc}")
-            #     error_data['error'] = 9
-            #     error_data['success'] = 'False'
-            # send_result_message(data)
             error_data['error'] = 9
             error_data['success'] = 'False'
             send_result_message(data)
@@ -229,87 +218,6 @@ class SeleniumConfirmation:
             error_data['error'] = 2
             error_data['success'] = 'False'
             send_result_message(error_data)
-            driver.quit()
-            return
-
-    @staticmethod
-    def old_site(driver, data: dict[str, Any], email: str, password: str, error_data: dict[str, Any]) -> None:
-        try:
-            email_text = WebDriverWait(driver, 5).until(
-                ec.presence_of_element_located((By.ID, 'i0116'))
-            )
-            email_text.click()
-            email_text.send_keys(email)  # Кнопка ввода email
-            driver.find_element(By.ID, 'idSIButton9').click()  # - Версия Димы
-            try:
-                # => Кнопка ввода пароля
-                password_text = WebDriverWait(driver, 5).until(
-                    ec.presence_of_element_located((By.ID, 'i0118'))
-                )
-                password_text.click()
-                password_text.send_keys(password)
-                driver.find_element(By.ID, 'idSIButton9').click()  # - Версия Димы
-            except Exception as exc:
-                logger.error(f"Ошибка при вводе пароля: {exc}")
-                data['success'] = 'False'
-                data['error'] = 3
-                send_result_message(data)
-                driver.quit()
-                return
-            try:
-                # => Кнопка остаться в системе
-                WebDriverWait(driver, 5).until(
-                    ec.presence_of_element_located(
-                        (By.ID, 'declineButton'))).click()
-                data['success'] = 'True'
-                data['error'] = 0
-                send_result_message(data)
-                driver.quit()
-                return
-            except TimeoutException:
-                logger.error("TimeoutException: Кнопка 'declineButton' не найдена")
-                pass
-
-            try:
-                while True:
-                    # => После аутентификатора просит подтвердить.
-                    # => Сделать проверку нахождения такой кнопки (Она может быть циклична)
-                    WebDriverWait(driver, 5).until(
-                        ec.presence_of_element_located(
-                            (By.ID, 'iLooksGood')
-                        )
-                    ).click()
-            except Exception as exc:
-                logger.error(f"Ошибка при нажатии на кнопку 'iLooksGood': {exc}")
-
-            try:
-                # => Запрос аутентификатора после ввода пароля
-                WebDriverWait(driver, 5).until(
-                    ec.presence_of_element_located((By.ID, 'inner')))
-                error_data['error'] = 2
-                error_data['success'] = 'False'
-                send_result_message(error_data)
-                driver.quit()
-                return
-
-            except Exception as exc:
-                logger.error(f"Ошибка при ожидании элемента 'inner': {exc}")
-
-            # => Кнопка "нет" при запросе остаться в системе
-            WebDriverWait(driver, 5).until(
-                ec.presence_of_element_located(
-                    (By.ID, 'secondaryButton'))).click()
-            data['success'] = 'True'
-            data['error'] = 0
-            send_result_message(data)
-            driver.quit()
-            return
-
-        except Exception as exc:
-            logger.error(f"Неизвестная ошибка: {exc}")
-            error_data['error'] = 9
-            error_data['success'] = 'False'
-            send_result_message(data)
             driver.quit()
             return
 
