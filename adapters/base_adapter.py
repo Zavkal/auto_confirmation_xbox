@@ -10,9 +10,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from seleniumbase.common.exceptions import TimeoutException
 
-from rabbit.send_result import send_result_message
+from entities.access_response_entity import AccessResponseQueueEntity
+from rabbit.send_result import AccessResponsePublisher
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ class SeleniumConfirmation:
         self.options.add_argument(f'--user-data-dir={self.user_data_dir}')
         self.driver = webdriver.Chrome(options=self.options)
 
+
     def __del__(self) -> None:
         try:
             self.driver.quit()
@@ -37,185 +38,165 @@ class SeleniumConfirmation:
         except Exception as exc:
             logger.error(f"Ошибка при удалении временной папки: {exc}")
 
-    def confirmation_code(self, data: dict[str, Any]) -> None:
-        error_data = copy.deepcopy(data)
-        code = data['code']
-        email = data['login']
-        password = data['password']
-        data['success'] = 'False'
-        data['error'] = 10
-        send_result_message(data)
+
+    def confirmation_code(self, data: dict[str, Any], response_rabbit: AccessResponsePublisher) -> None:
+        entity = AccessResponseQueueEntity(**data)
+        entity.error = 10
+        entity.success = 'False'
+        response_rabbit.publish(entity=entity)
         logger.info(f"Отправил код 10. {data}")
         try:
             self.driver.get('https://login.live.com/oauth20_remoteconnect.srf')
-            self.driver.find_element(By.ID, 'otc').send_keys(code)
+            WebDriverWait(self.driver, 5).until(
+                ec.visibility_of_element_located((By.ID, 'otc'))
+            )
+            self.driver.find_element(By.ID, 'otc').send_keys(entity.code)
             self.driver.find_element(By.ID, 'idSIButton9').click()
             time.sleep(10)
             self.new_site(
                 driver=self.driver,
-                data=data,
-                email=email,
-                password=password,
-                error_data=error_data,
+                entity=entity,
+                email=entity.login,
+                password=entity.password,
+                response_rabbit=response_rabbit
             )
         except Exception as exc:
             logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
-            error_data['error'] = 9
-            send_result_message(error_data)
-            self.driver.quit()
+            entity.error = 9
+            response_rabbit.publish(entity=entity)
             return
 
         finally:
             self.driver.quit()
+            response_rabbit.close_connection()
+
 
     @staticmethod
-    def new_site(driver, data: dict[str, Any], email: str, password: str, error_data: dict[str, Any]) -> None:
+    def new_site(driver, entity: AccessResponseQueueEntity, email: str, password: str, response_rabbit: AccessResponsePublisher) -> None:
         try:
-            email_text = WebDriverWait(driver, 5).until(
-                ec.presence_of_element_located((By.ID, 'usernameEntry'))
-            )
-            email_text.click()
-            email_text.send_keys(email)
+            try:
+                email_text = WebDriverWait(driver, 5).until(
+                    ec.presence_of_element_located((By.ID, 'usernameEntry'))
+                )
+                email_text.click()
+                email_text.send_keys(email)
 
-            WebDriverWait(driver, 5).until(
-                ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
-            ).click()
-        except Exception as exc:
-            logger.error(f"Ошибка при вводе email: {exc}")
-            error_data['error'] = 1
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
-        try:
-            driver.find_element(By.XPATH, "//*[contains(text(), \"Не удалось найти учетную запись Майкрософт\")]")
-            error_data['error'] = 4
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
-        except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
-            pass
+                WebDriverWait(driver, 5).until(
+                    ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
+                ).click()
+            except Exception as exc:
+                logger.error(f"Ошибка при вводе email: {exc}")
+                entity.error = 1
+                return
+            try:
+                driver.find_element(By.XPATH, "//*[contains(text(), \"Не удалось найти учетную запись Майкрософт\")]")
+                entity.error = 4
+                return
+            except Exception as exc:
+                logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+                pass
 
-        try:
-            WebDriverWait(driver, 3).until(
-                ec.presence_of_element_located((By.XPATH, "//*[text()='Другие способы входа']"))
-            ).click()
+            try:
+                WebDriverWait(driver, 3).until(
+                    ec.presence_of_element_located((By.XPATH, "//*[text()='Другие способы входа']"))
+                ).click()
 
-        except Exception as exc:
-            logger.error(f"Ошибка при повторном нажатии на кнопку 'Другие способы входа': {exc}")
+            except Exception as exc:
+                logger.error(f"Ошибка при повторном нажатии на кнопку 'Другие способы входа': {exc}")
 
 
-        try:
-            WebDriverWait(driver, 3).until(
-                ec.presence_of_element_located((By.XPATH, "//*[text()='Используйте свой пароль']"))
-            ).click()
-        except Exception as exc:
-            logger.error(f"Ошибка при повторном нажатии на кнопку 'Используйте свой пароль': {exc}")
-        try:
-            WebDriverWait(driver, 3).until(
-                ec.presence_of_element_located((By.ID, 'fui-CardHeader__header30'))
-            ).click()
-        except Exception as exc:
-            logger.error(f"Ошибка при нажатии на элемент 'fui-CardHeader__header30': {exc}")
-        try:
-            WebDriverWait(driver, 3).until(
-                ec.presence_of_element_located((By.ID, 'idA_PWD_SwitchToPassword'))
-            ).click()
-        except Exception as exc:
-            logger.error(f"Ошибка при нажатии на элемент 'idA_PWD_SwitchToPassword': {exc}")
-        try:
-            if password is None:
-                raise Exception
-            password_text = WebDriverWait(driver, 5).until(
-                ec.presence_of_element_located((By.ID, 'passwordEntry')))
-            password_text.click()
-            password_text.send_keys(password)
-            WebDriverWait(driver, 5).until(
-                ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
-            ).click()
-        except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
-            driver.find_element(By.ID, "error")
-            error_data['error'] = 3
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
+            try:
+                WebDriverWait(driver, 3).until(
+                    ec.presence_of_element_located((By.XPATH, "//*[text()='Используйте свой пароль']"))
+                ).click()
+            except Exception as exc:
+                logger.error(f"Ошибка при повторном нажатии на кнопку 'Используйте свой пароль': {exc}")
+            try:
+                WebDriverWait(driver, 3).until(
+                    ec.presence_of_element_located((By.ID, 'fui-CardHeader__header30'))
+                ).click()
+            except Exception as exc:
+                logger.error(f"Ошибка при нажатии на элемент 'fui-CardHeader__header30': {exc}")
+            try:
+                WebDriverWait(driver, 3).until(
+                    ec.presence_of_element_located((By.ID, 'idA_PWD_SwitchToPassword'))
+                ).click()
+            except Exception as exc:
+                logger.error(f"Ошибка при нажатии на элемент 'idA_PWD_SwitchToPassword': {exc}")
+            try:
+                if password is None:
+                    raise Exception
+                password_text = WebDriverWait(driver, 5).until(
+                    ec.presence_of_element_located((By.ID, 'passwordEntry')))
+                password_text.click()
+                password_text.send_keys(password)
+                WebDriverWait(driver, 5).until(
+                    ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
+                ).click()
+            except Exception as exc:
+                logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+                driver.find_element(By.ID, "error")
+                entity.error = 3
+                return
 
-        try:
-            logger.error("Ошибка пароля")
-            driver.find_element(By.XPATH, "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
-            error_data['error'] = 3
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
-        except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+            try:
+                logger.error("Ошибка пароля")
+                driver.find_element(By.XPATH, "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
+                entity.error = 3
+                return
+            except Exception as exc:
+                logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
 
-        try:
-            logger.error("Ошибка: Введенный код истек")
-            driver.find_element(By.XPATH, "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
-            error_data['error'] = 1
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
-        except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+            try:
+                logger.error("Ошибка: Введенный код истек")
+                driver.find_element(By.XPATH, "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
+                entity.error = 1
+                return
+            except Exception as exc:
+                logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
 
-        try:
-            # => Кнопка остаться в системе
-            WebDriverWait(driver, 5).until(
-                ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
-            ).click()
-            data['success'] = 'True'
-            data['error'] = 0
-            send_result_message(data)
-            driver.quit()
-            return
-        except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {exc}")
-        try:
-            while True:
-                # => После ввода пароля просит резерв почту
+            try:
+                # => Кнопка остаться в системе
+                WebDriverWait(driver, 5).until(
+                    ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
+                ).click()
+                entity.success = 'True'
+                entity.error = 0
+                return
+            except Exception as exc:
+                logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {exc}")
+            try:
+                while True:
+                    # => После ввода пароля просит резерв почту
+                    WebDriverWait(driver, 5).until(
+                        ec.element_to_be_clickable(
+                            (By.ID, 'iShowSkip'))).click()
+            except Exception as exc:
+                logger.error(f"Ошибка при нажатии на кнопку 'iShowSkip': {exc}")
+            try:
+                # => Просит аутентификацию
                 WebDriverWait(driver, 5).until(
                     ec.element_to_be_clickable(
-                        (By.ID, 'iShowSkip'))).click()
-        except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'iShowSkip': {exc}")
-        try:
-            # => Просит аутентификацию
-            WebDriverWait(driver, 5).until(
-                ec.element_to_be_clickable(
-                    (By.ID, 'lightbox-cover'))).click()
-        except Exception as e:
-            logger.error(f"Ошибка при нажатии на элемент 'lightbox-cover': {e}")
-            error_data['error'] = 2
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
+                        (By.ID, 'lightbox-cover'))).click()
+            except Exception as e:
+                logger.error(f"Ошибка при нажатии на элемент 'lightbox-cover': {e}")
+                entity.error = 2
+                return
 
-        try:
-            # => Кнопка остаться в системе
-            WebDriverWait(driver, 5).until(
-                ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
-            ).click()
-            data['success'] = 'True'
-            data['error'] = 0
-            send_result_message(data)
-            driver.quit()
-            return
-        except Exception as e:
-            logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {e}")
-            error_data['error'] = 2
-            error_data['success'] = 'False'
-            send_result_message(error_data)
-            driver.quit()
-            return
+            try:
+                # => Кнопка остаться в системе
+                WebDriverWait(driver, 5).until(
+                    ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
+                ).click()
+                entity.success = 'True'
+                entity.error = 0
+                return
+            except Exception as e:
+                logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {e}")
+                entity.error = 2
+                return
+        finally:
+            response_rabbit.publish(entity=entity)
 
 
 if __name__ == '__main__':
@@ -224,3 +205,4 @@ if __name__ == '__main__':
               'login': 'Dl2privat2@ya.ru', 'password': 'box22222', 'user_message_id': 29046,
               'product_title': 'Dying Light 2 - Ultimate', 'back_from': 'delivery', 'subs_period_id': None, 'error': 9,
               'success': 'False'})
+
