@@ -40,8 +40,8 @@ class SeleniumConfirmation:
 
     def confirmation_code(self, data: dict[str, Any]) -> None:
         entity = AccessResponseQueueEntity(**data)
-        entity.error = AccessStatusError.IN_PROGRESS.value
-        entity.success = AccessStatusSolution.ERROR.value
+        entity.error = AccessStatusError.IN_PROGRESS
+        entity.success = AccessStatusSolution.ERROR
         self.publisher.publish(entity=entity)
         logger.info(f"Отправил код 10 {data}")
         try:
@@ -59,7 +59,7 @@ class SeleniumConfirmation:
             )
         except Exception as exc:
             logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
-            entity.error = AccessStatusError.SITE_ERROR.value
+            entity.error = AccessStatusError.SITE_ERROR
             self.publisher.publish(entity=entity)
             return
 
@@ -75,7 +75,7 @@ class SeleniumConfirmation:
                 WebDriverWait(driver, 2).until(
                     ec.visibility_of_element_located((By.XPATH, "//*[contains(text(), \"Этот код не подошел. Проверьте код и повторите попытку.\")]")))
                 logging.error(f'Ошибка: Код не верный')
-                entity.error = AccessStatusError.CODE_ERROR.value
+                entity.error = AccessStatusError.CODE_ERROR
                 return
             except Exception as exc:
                 logging.error(f'Ошибка: Ошибка при проверке ошибки {exc}')
@@ -92,12 +92,12 @@ class SeleniumConfirmation:
                 ).click()
             except Exception as exc:
                 logger.error(f"Ошибка при вводе email: {exc}")
-                entity.error = AccessStatusError.EMAIL_ERROR.value
+                entity.error = AccessStatusError.EMAIL_ERROR
                 return
             try:
                 WebDriverWait(driver, 2).until(
                     ec.visibility_of_element_located((By.XPATH, "//*[contains(text(), \"Попробуйте ввести свои данные еще раз или создайте учетную запись.\")]")))
-                entity.error = AccessStatusError.EMAIL_ERROR.value
+                entity.error = AccessStatusError.EMAIL_ERROR
                 return
             except Exception as exc:
                 logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
@@ -143,13 +143,13 @@ class SeleniumConfirmation:
             except Exception as exc:
                 logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
                 driver.find_element(By.ID, "error")
-                entity.error = AccessStatusError.PASSWORD_ERROR.value
+                entity.error = AccessStatusError.PASSWORD_ERROR
                 return
 
             try:
                 logger.error("Ошибка пароля")
                 driver.find_element(By.XPATH, "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
-                entity.error = AccessStatusError.PASSWORD_ERROR.value
+                entity.error = AccessStatusError.PASSWORD_ERROR
                 return
             except Exception as exc:
                 logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
@@ -157,7 +157,7 @@ class SeleniumConfirmation:
             try:
                 logger.error("Ошибка: Введенный код истек")
                 driver.find_element(By.XPATH, "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
-                entity.error = AccessStatusError.CODE_ERROR.value
+                entity.error = AccessStatusError.CODE_ERROR
                 return
             except Exception as exc:
                 logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
@@ -167,8 +167,8 @@ class SeleniumConfirmation:
                 WebDriverWait(driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
                 ).click()
-                entity.success = AccessStatusSolution.SUCCESS.value
-                entity.error = AccessStatusError.SUCCESS.value
+                entity.success = AccessStatusSolution.SUCCESS
+                entity.error = AccessStatusError.SUCCESS
                 return
             except Exception as exc:
                 logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {exc}")
@@ -187,7 +187,7 @@ class SeleniumConfirmation:
                         (By.ID, 'lightbox-cover'))).click()
             except Exception as e:
                 logger.error(f"Ошибка при нажатии на элемент 'lightbox-cover': {e}")
-                entity.error = AccessStatusError.AUTHENTICATOR_ERROR.value
+                entity.error = AccessStatusError.AUTHENTICATOR_ERROR
                 return
 
             try:
@@ -195,12 +195,12 @@ class SeleniumConfirmation:
                 WebDriverWait(driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
                 ).click()
-                entity.success = AccessStatusSolution.SUCCESS.value
-                entity.error = AccessStatusError.SUCCESS.value
+                entity.success = AccessStatusSolution.SUCCESS
+                entity.error = AccessStatusError.SUCCESS
                 return
             except Exception as e:
                 logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {e}")
-                entity.error = AccessStatusError.AUTHENTICATOR_ERROR.value
+                entity.error = AccessStatusError.AUTHENTICATOR_ERROR
                 return
         finally:
             publisher.publish(entity=entity)
