@@ -16,10 +16,10 @@ class AccessResponsePublisher:
             self.parameters
         )
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name)
+        self.channel.queue_declare(queue=self.queue_name, durable=True)
 
 
-    def publish(self, *, entity: AccessResponseQueueEntity) -> None:
+    def publish(self, *, entity: AccessResponseQueueEntity, ) -> None:
         body = json.dumps(asdict(entity)).encode("utf-8")
         self.channel.basic_publish(
             exchange="",
