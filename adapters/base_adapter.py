@@ -20,7 +20,7 @@ class SeleniumConfirmation:
     def __init__(self, publisher: AccessResponsePublisher) -> None:
         self.options = ChromeOptions()
         self.options.add_argument('--incognito')
-        # self.options.add_argument('--headless')
+        self.options.add_argument('--headless')
         self.options.add_argument('--no-sandbox')
         self.options.add_argument("--disable-dev-shm-usage")
         self.options.add_argument('--disable-gpu')
