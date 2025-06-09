@@ -53,9 +53,7 @@ class SeleniumConfirmation:
             self.driver.find_element(By.ID, 'idSIButton9').click()
             time.sleep(10)
             self.new_site(
-                driver=self.driver,
                 entity=entity,
-                publisher=self.publisher
             )
         except Exception as exc:
             logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
@@ -68,11 +66,10 @@ class SeleniumConfirmation:
             self.publisher.close_connection()
 
 
-    @staticmethod
-    def new_site(driver, entity: AccessResponseQueueEntity, publisher: AccessResponsePublisher) -> None:
+    def new_site(self, entity: AccessResponseQueueEntity,) -> None:
         try:
             try:
-                WebDriverWait(driver, 2).until(
+                WebDriverWait(self.driver, 2).until(
                     ec.visibility_of_element_located((By.XPATH, "//*[contains(text(), \"Этот код не подошел. Проверьте код и повторите попытку.\")]")))
                 logging.error(f'Ошибка: Код не верный')
                 entity.error = AccessStatusError.CODE_ERROR
@@ -81,13 +78,13 @@ class SeleniumConfirmation:
                 logging.error(f'Ошибка: Ошибка при проверке ошибки {exc}')
 
             try:
-                email_text = WebDriverWait(driver, 5).until(
+                email_text = WebDriverWait(self.driver, 5).until(
                     ec.presence_of_element_located((By.ID, 'usernameEntry'))
                 )
                 email_text.click()
                 email_text.send_keys(entity.login)
 
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(self.driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
                 ).click()
             except Exception as exc:
@@ -95,7 +92,7 @@ class SeleniumConfirmation:
                 entity.error = AccessStatusError.EMAIL_ERROR
                 return
             try:
-                WebDriverWait(driver, 2).until(
+                WebDriverWait(self.driver, 2).until(
                     ec.visibility_of_element_located((By.XPATH, "//*[contains(text(), \"Попробуйте ввести свои данные еще раз или создайте учетную запись.\")]")))
                 entity.error = AccessStatusError.EMAIL_ERROR
                 return
@@ -103,28 +100,28 @@ class SeleniumConfirmation:
                 logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
 
             try:
-                WebDriverWait(driver, 3).until(
+                WebDriverWait(self.driver, 3).until(
                     ec.presence_of_element_located((By.XPATH, "//*[text()='Другие способы входа']"))
                 ).click()
             except Exception as exc:
                 logger.error(f"Ошибка при повторном нажатии на кнопку 'Другие способы входа': {exc}")
 
             try:
-                WebDriverWait(driver, 3).until(
+                WebDriverWait(self.driver, 3).until(
                     ec.presence_of_element_located((By.XPATH, "//*[text()='Используйте свой пароль']"))
                 ).click()
             except Exception as exc:
                 logger.error(f"Ошибка при повторном нажатии на кнопку 'Используйте свой пароль': {exc}")
 
             try:
-                WebDriverWait(driver, 3).until(
+                WebDriverWait(self.driver, 3).until(
                     ec.presence_of_element_located((By.ID, 'fui-CardHeader__header30'))
                 ).click()
             except Exception as exc:
                 logger.error(f"Ошибка при нажатии на элемент 'fui-CardHeader__header30': {exc}")
 
             try:
-                WebDriverWait(driver, 3).until(
+                WebDriverWait(self.driver, 3).until(
                     ec.presence_of_element_located((By.ID, 'idA_PWD_SwitchToPassword'))
                 ).click()
             except Exception as exc:
@@ -133,22 +130,22 @@ class SeleniumConfirmation:
             try:
                 if entity.password is None:
                     raise Exception
-                password_text = WebDriverWait(driver, 5).until(
+                password_text = WebDriverWait(self.driver, 5).until(
                     ec.presence_of_element_located((By.ID, 'passwordEntry')))
                 password_text.click()
                 password_text.send_keys(entity.password)
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(self.driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
                 ).click()
             except Exception as exc:
                 logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
-                driver.find_element(By.ID, "error")
+                self.driver.find_element(By.ID, "error")
                 entity.error = AccessStatusError.PASSWORD_ERROR
                 return
 
             try:
                 logger.error("Ошибка пароля")
-                driver.find_element(By.XPATH, "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
+                self.driver.find_element(By.XPATH, "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
                 entity.error = AccessStatusError.PASSWORD_ERROR
                 return
             except Exception as exc:
@@ -156,7 +153,7 @@ class SeleniumConfirmation:
 
             try:
                 logger.error("Ошибка: Введенный код истек")
-                driver.find_element(By.XPATH, "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
+                self.driver.find_element(By.XPATH, "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
                 entity.error = AccessStatusError.CODE_ERROR
                 return
             except Exception as exc:
@@ -164,7 +161,7 @@ class SeleniumConfirmation:
 
             try:
                 # => Кнопка остаться в системе
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(self.driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
                 ).click()
                 entity.success = AccessStatusSolution.SUCCESS
@@ -175,14 +172,14 @@ class SeleniumConfirmation:
             try:
                 while True:
                     # => После ввода пароля просит резерв почту
-                    WebDriverWait(driver, 5).until(
+                    WebDriverWait(self.driver, 5).until(
                         ec.element_to_be_clickable(
                             (By.ID, 'iShowSkip'))).click()
             except Exception as exc:
                 logger.error(f"Ошибка при нажатии на кнопку 'iShowSkip': {exc}")
             try:
                 # => Просит аутентификацию
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(self.driver, 5).until(
                     ec.element_to_be_clickable(
                         (By.ID, 'lightbox-cover'))).click()
             except Exception as e:
@@ -192,7 +189,7 @@ class SeleniumConfirmation:
 
             try:
                 # => Кнопка остаться в системе
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(self.driver, 5).until(
                     ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
                 ).click()
                 entity.success = AccessStatusSolution.SUCCESS
@@ -203,7 +200,7 @@ class SeleniumConfirmation:
                 entity.error = AccessStatusError.AUTHENTICATOR_ERROR
                 return
         finally:
-            publisher.publish(entity=entity)
+            self.publisher.publish(entity=entity)
 
 
 if __name__ == '__main__':
