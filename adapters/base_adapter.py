@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import tempfile
 import time
@@ -112,7 +113,7 @@ class SeleniumConfirmation:
                 ec.presence_of_element_located((By.ID, 'usernameEntry'))
             )
             email_text.click()
-            self.driver.save_screenshot('check_info.png')
+            self.driver.save_screenshot(os.path.join(os.getcwd(), 'check.png'))
             email_text.send_keys(self.entity.login)
 
             WebDriverWait(self.driver, 5).until(
