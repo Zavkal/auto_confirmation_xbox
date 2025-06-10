@@ -194,6 +194,7 @@ class SeleniumConfirmation:
             WebDriverWait(self.driver, 5).until(
                 ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]'))
             ).click()
+            time.sleep(5)
             self.entity.success = AccessStatusSolution.SUCCESS
             self.entity.error = AccessStatusError.SUCCESS
             raise CustomExitException
@@ -232,10 +233,10 @@ class SeleniumConfirmation:
 
         while True:
             # Проверяем таймаут
-            # if time.monotonic() - start_time > timeout:
-            #     logger.info("Таймер истёк. Прекращаем попытки.")
-            #     self.entity.error = AccessStatusError.UNKNOWN_ERROR
-            #     break
+            if time.monotonic() - start_time > timeout:
+                logger.info("Таймер истёк. Прекращаем попытки.")
+                self.entity.error = AccessStatusError.UNKNOWN_ERROR
+                break
 
             try:
                 self.driver.find_element(By.ID, 'passwordEntry')
