@@ -29,18 +29,12 @@ class SeleniumConfirmation:
         self.options.add_argument('--no-sandbox')
         self.options.add_argument("--disable-dev-shm-usage")
         self.options.add_argument('--disable-gpu')
-        self.options.add_argument('--lang=ru')
-        self.options.add_argument("--window-size=1366,1080")
         self.user_data_dir = tempfile.mkdtemp()
         self.options.add_argument(f'--user-data-dir={self.user_data_dir}')
         self.driver = webdriver.Chrome(options=self.options)
         self.publisher = publisher
         self.entity = None
 
-
-        self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
-            "headers": {"Accept-Language": "ru-RU,ru;q=0.9"}
-        })
 
     def __del__(self) -> None:
         try:
@@ -99,7 +93,7 @@ class SeleniumConfirmation:
             WebDriverWait(self.driver, 2).until(
                 ec.visibility_of_element_located(
                     (By.XPATH,
-                     "//*[contains(text(), \"Этот код не подошел. Проверьте код и повторите попытку.\")]")))
+                     "//*[contains(text(), \"Check the code and try again\")]")))
             logging.error(f'Ошибка: Код не верный')
             self.entity.error = AccessStatusError.CODE_ERROR
             raise CustomExitException
@@ -113,7 +107,6 @@ class SeleniumConfirmation:
                 ec.presence_of_element_located((By.ID, 'usernameEntry'))
             )
             email_text.click()
-            self.driver.save_screenshot(os.path.join(os.getcwd(), 'check.png'))
             email_text.send_keys(self.entity.login)
 
             WebDriverWait(self.driver, 5).until(
@@ -127,7 +120,7 @@ class SeleniumConfirmation:
         try:
             WebDriverWait(self.driver, 2).until(
                 ec.visibility_of_element_located((By.XPATH,
-                                                  "//*[contains(text(), \"Попробуйте ввести свои данные еще раз или создайте учетную запись.\")]")))
+                                                  "//*[contains(text(), \"Try entering your details again, or create an account\")]")))
             self.entity.error = AccessStatusError.EMAIL_ERROR
             raise CustomExitException
         except Exception as exc:
@@ -150,7 +143,7 @@ class SeleniumConfirmation:
 
         try:
             self.driver.find_element(By.XPATH,
-                                     "//*[contains(text(), \"Неправильный пароль для учетной записи Майкрософт.\")]")
+                                     "//*[contains(text(), \"password is incorrect\")]")
             self.entity.error = AccessStatusError.PASSWORD_ERROR
             logger.error("Ошибка пароля")
             raise CustomExitException
@@ -161,7 +154,7 @@ class SeleniumConfirmation:
     def check_other_login(self):
         try:
             WebDriverWait(self.driver, 3).until(
-                ec.visibility_of_element_located((By.XPATH, "//*[text()='Другие способы входа']"))
+                ec.visibility_of_element_located((By.XPATH, "//*[text()='Other ways to sign in']"))
             ).click()
         except Exception as exc:
             logger.error(f"Ошибка при нажатии на кнопку 'Другие способы входа': {exc}")
@@ -170,7 +163,7 @@ class SeleniumConfirmation:
     def check_use_password(self):
         try:
             WebDriverWait(self.driver, 3).until(
-                ec.visibility_of_element_located((By.XPATH, "//*[text()='Используйте свой пароль']"))
+                ec.visibility_of_element_located((By.XPATH, "//*[text()='Use your password']"))
             ).click()
         except Exception as exc:
             logger.error(f"Ошибка при нажатии на кнопку 'Используйте свой пароль': {exc}")
@@ -179,7 +172,7 @@ class SeleniumConfirmation:
     def check_code_expired(self):
         try:
             self.driver.find_element(By.XPATH,
-                                     "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
+                                     "//*[contains(text(), \"Get a new code from the device you're trying to sign in to and try again\")]")
             self.entity.error = AccessStatusError.CODE_ERROR
             logger.error("Ошибка: Введенный код истек")
             raise CustomExitException
@@ -188,14 +181,6 @@ class SeleniumConfirmation:
 
 
     def check_2fa(self):
-        try:
-            self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
-            raise CustomExitException
-        except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
-
-
-    def check_2fa_window(self):
         try:
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             raise CustomExitException
@@ -247,10 +232,10 @@ class SeleniumConfirmation:
 
         while True:
             # Проверяем таймаут
-            if time.monotonic() - start_time > timeout:
-                logger.info("Таймер истёк. Прекращаем попытки.")
-                self.entity.error = AccessStatusError.UNKNOWN_ERROR
-                break
+            # if time.monotonic() - start_time > timeout:
+            #     logger.info("Таймер истёк. Прекращаем попытки.")
+            #     self.entity.error = AccessStatusError.UNKNOWN_ERROR
+            #     break
 
             try:
                 self.driver.find_element(By.ID, 'passwordEntry')
@@ -260,21 +245,21 @@ class SeleniumConfirmation:
                 pass
 
             try:
-                self.driver.find_element(By.XPATH, "//*[text()='Другие способы входа']")
+                self.driver.find_element(By.XPATH, "//*[text()='Other ways to sign in']")
                 self.check_other_login()
                 start_time = time.monotonic()
             except Exception as exc:
                 pass
 
             try:
-                self.driver.find_element(By.XPATH, "//*[text()='Используйте свой пароль']")
+                self.driver.find_element(By.XPATH, "//*[text()='Use your password']")
                 self.check_use_password()
             except Exception as exc:
                 pass
 
             try:
                 self.driver.find_element(By.XPATH,
-                                         "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
+                                         "//*[contains(text(), \"Get a new code from the device you're trying to sign in to and try again\")]")
                 self.check_code_expired()
                 start_time = time.monotonic()
             except Exception as exc:
@@ -282,7 +267,7 @@ class SeleniumConfirmation:
 
             try:
                 self.driver.find_element(By.XPATH,
-                                         "//*[contains(text(), \"есть код\")]")
+                                         "//*[contains(text(), \"I have a code\")]")
                 self.check_2fa()
                 start_time = time.monotonic()
             except Exception as exc:
@@ -290,7 +275,15 @@ class SeleniumConfirmation:
 
             try:
                 self.driver.find_element(By.XPATH,
-                                         "//*[contains(text(), \"Одобрите запрос\")]")
+                                         "//*[contains(text(), \"Don't recognize or have any of these\")]")
+                self.check_2fa()
+                start_time = time.monotonic()
+            except Exception as exc:
+                pass
+
+            try:
+                self.driver.find_element(By.XPATH,
+                                         "//*[contains(text(), \"approve request\")]")
                 self.check_2fa()
                 start_time = time.monotonic()
             except Exception as exc:
