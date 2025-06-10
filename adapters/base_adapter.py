@@ -29,12 +29,17 @@ class SeleniumConfirmation:
         self.options.add_argument("--disable-dev-shm-usage")
         self.options.add_argument('--disable-gpu')
         self.options.add_argument('--lang=ru')
+        self.options.add_argument("--window-size=1366,1080")
         self.user_data_dir = tempfile.mkdtemp()
         self.options.add_argument(f'--user-data-dir={self.user_data_dir}')
         self.driver = webdriver.Chrome(options=self.options)
         self.publisher = publisher
         self.entity = None
 
+
+        self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
+            "headers": {"Accept-Language": "ru-RU,ru;q=0.9"}
+        })
 
     def __del__(self) -> None:
         try:
@@ -49,7 +54,6 @@ class SeleniumConfirmation:
         self.entity.error = AccessStatusError.IN_PROGRESS
         self.entity.success = AccessStatusSolution.ERROR
         self.publisher.publish(entity=self.entity)
-        logger.info(f"Отправил код 10 {data}")
         try:
             self.driver.get('https://login.live.com/oauth20_remoteconnect.srf')
             self.new_site()
@@ -108,6 +112,7 @@ class SeleniumConfirmation:
                 ec.presence_of_element_located((By.ID, 'usernameEntry'))
             )
             email_text.click()
+            self.driver.save_screenshot('check_info.png')
             email_text.send_keys(self.entity.login)
 
             WebDriverWait(self.driver, 5).until(
@@ -176,6 +181,22 @@ class SeleniumConfirmation:
                                      "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
             self.entity.error = AccessStatusError.CODE_ERROR
             logger.error("Ошибка: Введенный код истек")
+            raise CustomExitException
+        except Exception as exc:
+            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+
+
+    def check_2fa(self):
+        try:
+            self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
+            raise CustomExitException
+        except Exception as exc:
+            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+
+
+    def check_2fa_window(self):
+        try:
+            self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             raise CustomExitException
         except Exception as exc:
             logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
@@ -254,6 +275,22 @@ class SeleniumConfirmation:
                 self.driver.find_element(By.XPATH,
                                          "//*[contains(text(), \"Получите новый код из устройства, на котором вы пытаетесь войти, и повторите попытку\")]")
                 self.check_code_expired()
+                start_time = time.monotonic()
+            except Exception as exc:
+                pass
+
+            try:
+                self.driver.find_element(By.XPATH,
+                                         "//*[contains(text(), \"есть код\")]")
+                self.check_2fa()
+                start_time = time.monotonic()
+            except Exception as exc:
+                pass
+
+            try:
+                self.driver.find_element(By.XPATH,
+                                         "//*[contains(text(), \"Одобрите запрос\")]")
+                self.check_2fa()
                 start_time = time.monotonic()
             except Exception as exc:
                 pass
