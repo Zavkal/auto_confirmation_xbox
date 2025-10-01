@@ -41,20 +41,20 @@ check-env:
 
 
 # Сборка образа
-build: check-env create-logs ## Собрать Docker образ
+build: check-env ## Собрать Docker образ
 	@echo "$(BLUE)Сборка Docker образа...$(NC)"
-	docker-compose build --no-cache
+	docker-compose build
 	@echo "$(GREEN)Образ собран успешно!$(NC)"
 
 # Запуск контейнера
-up: check-env create-logs ## Запустить контейнер
+up: check-env ## Запустить контейнер
 	@echo "$(BLUE)Запуск контейнера...$(NC)"
 	docker-compose up -d
 	@echo "$(GREEN)Контейнер запущен!$(NC)"
 	@echo "$(YELLOW)Для просмотра логов: make logs$(NC)"
 
 # Сборка и запуск
-start: build up ## Собрать и запустить контейнер
+start: build up -d ## Собрать и запустить контейнер
 
 # Остановка контейнера
 down: ## Остановить контейнер
@@ -82,7 +82,6 @@ status: ## Показать статус контейнера
 clean: ## Остановить и удалить контейнер, очистить образы
 	@echo "$(YELLOW)Остановка и удаление контейнера...$(NC)"
 	docker-compose down --remove-orphans
-	docker system prune -f
 	@echo "$(GREEN)Очистка завершена!$(NC)"
 
 
