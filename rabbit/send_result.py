@@ -4,7 +4,7 @@ import time
 from dataclasses import asdict
 
 import pika
-from pika.exceptions import AMQPConnectionError, StreamLostError, ConnectionClosedByClient
+from pika.exceptions import AMQPConnectionError, StreamLostError, ConnectionClosedByClient, ChannelClosedByBroker
 
 from entities.access_response_entity import AccessResponseQueueEntity
 
@@ -23,7 +23,17 @@ class AccessResponsePublisher:
         try:
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
-            self.channel.queue_declare(queue=self.queue_name, durable=True)
+            # Проверяем существующую очередь без изменения её параметров
+            try:
+                self.channel.queue_declare(queue=self.queue_name, passive=True)
+            except ChannelClosedByBroker as e:
+                if getattr(e, "reply_code", None) == 404:
+                    # Очередь отсутствует - создадим без указания durable, чтобы не конфликтовать
+                    if self.channel.is_closed:
+                        self.channel = self.connection.channel()
+                    self.channel.queue_declare(queue=self.queue_name)
+                else:
+                    raise
             logger.info("Соединение с очередью %s установлено", self.queue_name)
         except (AMQPConnectionError, StreamLostError, ConnectionClosedByClient, OSError, IOError) as e:
             logger.error("Ошибка подключения к RabbitMQ: %s", e)

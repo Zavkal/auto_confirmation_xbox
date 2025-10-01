@@ -1,7 +1,7 @@
 import logging
 import time
 import pika
-from pika.exceptions import AMQPConnectionError, StreamLostError, ConnectionClosedByClient
+from pika.exceptions import AMQPConnectionError, StreamLostError, ConnectionClosedByClient, ChannelClosedByBroker
 from config import RABBITMQ_QUEUE_REQUEST, parameters
 from rabbit.process_mq import process_message
 
@@ -43,8 +43,19 @@ def _consume_messages() -> None:
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
 
-        # Декларируем очередь (на случай, если она не создана)
-        channel.queue_declare(queue=RABBITMQ_QUEUE_REQUEST, durable=True)
+        # Проверяем существующую очередь без изменения её параметров
+        try:
+            channel.queue_declare(queue=RABBITMQ_QUEUE_REQUEST, passive=True)
+        except ChannelClosedByBroker as e:
+            # 404 NOT-FOUND: создаём очередь без указания durable, чтобы не конфликтовать
+            if getattr(e, "reply_code", None) == 404:
+                logger.info("Очередь %s не найдена. Создаю...", RABBITMQ_QUEUE_REQUEST)
+                # Канал закроется при исключении, откроем новый
+                if channel.is_closed:
+                    channel = connection.channel()
+                channel.queue_declare(queue=RABBITMQ_QUEUE_REQUEST)
+            else:
+                raise
         logger.info("Подключение к очереди %s установлено", RABBITMQ_QUEUE_REQUEST)
 
         # Подписываемся на очередь
