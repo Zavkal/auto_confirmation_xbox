@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import tempfile
 import time
@@ -40,7 +39,7 @@ class SeleniumConfirmation:
         try:
             shutil.rmtree(self.user_data_dir, ignore_errors=True)
         except Exception as exc:
-            logger.error(f"Ошибка при удалении временной папки: {exc}")
+            logger.error("Ошибка при удалении временной папки: %s", exc)
 
 
 
@@ -54,7 +53,7 @@ class SeleniumConfirmation:
             self.new_site()
 
         except Exception as exc:
-            logger.error(f"Ошибка при открытии страницы для входа в xbox {exc}")
+            logger.error("Ошибка при открытии страницы для входа в xbox %s", exc)
             self.entity.error = AccessStatusError.SITE_ERROR
             self.publisher.publish(entity=self.entity)
             return
@@ -85,7 +84,7 @@ class SeleniumConfirmation:
             self.driver.find_element(By.ID, 'otc').send_keys(self.entity.code)
             self.driver.find_element(By.ID, 'idSIButton9').click()
         except Exception as exc:
-            logging.error(f'Ошибка: Ошибка при вводе кода {exc}')
+            logging.error('Ошибка: Ошибка при вводе кода %s', exc)
             self.entity.error = AccessStatusError.CODE_ERROR
             raise
 
@@ -94,11 +93,11 @@ class SeleniumConfirmation:
                 ec.visibility_of_element_located(
                     (By.XPATH,
                      "//*[contains(text(), \"Check the code and try again\")]")))
-            logging.error(f'Ошибка: Код не верный')
+            logging.error('Ошибка: Код не верный')
             self.entity.error = AccessStatusError.CODE_ERROR
             raise CustomExitException
         except Exception as exc:
-            logging.error(f'Ошибка: Ошибка при проверке ошибки {exc}')
+            logging.error('Ошибка: Ошибка при проверке ошибки %s', exc)
 
 
     def check_email(self):
@@ -113,7 +112,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
             ).click()
         except Exception as exc:
-            logger.error(f"Ошибка при вводе email: {exc}")
+            logger.error("Ошибка при вводе email: %s", exc)
             self.entity.error = AccessStatusError.EMAIL_ERROR
             raise
 
@@ -124,7 +123,7 @@ class SeleniumConfirmation:
             self.entity.error = AccessStatusError.EMAIL_ERROR
             raise CustomExitException
         except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
 
 
     def check_password(self):
@@ -137,7 +136,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
             ).click()
         except Exception as exc:
-            logger.error(f"Ошибка при вводе пароля {exc}")
+            logger.error("Ошибка при вводе пароля %s", exc)
             self.entity.error = AccessStatusError.PASSWORD_ERROR
             raise
 
@@ -148,7 +147,7 @@ class SeleniumConfirmation:
             logger.error("Ошибка пароля")
             raise CustomExitException
         except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
 
 
     def check_other_login(self):
@@ -157,7 +156,7 @@ class SeleniumConfirmation:
                 ec.visibility_of_element_located((By.XPATH, "//*[text()='Other ways to sign in']"))
             ).click()
         except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'Другие способы входа': {exc}")
+            logger.error("Ошибка при нажатии на кнопку 'Другие способы входа': %s", exc)
 
 
     def check_use_password(self):
@@ -166,7 +165,7 @@ class SeleniumConfirmation:
                 ec.visibility_of_element_located((By.XPATH, "//*[text()='Use your password']"))
             ).click()
         except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'Используйте свой пароль': {exc}")
+            logger.error("Ошибка при нажатии на кнопку 'Используйте свой пароль': %s", exc)
 
 
     def check_code_expired(self):
@@ -177,7 +176,7 @@ class SeleniumConfirmation:
             logger.error("Ошибка: Введенный код истек")
             raise CustomExitException
         except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
 
 
     def check_2fa(self):
@@ -185,7 +184,7 @@ class SeleniumConfirmation:
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             raise CustomExitException
         except Exception as exc:
-            logger.error(f"Ошибка при проверке наличия ошибки: {exc}")
+            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
 
 
     def check_stay_log_in(self):
@@ -199,7 +198,7 @@ class SeleniumConfirmation:
             self.entity.error = AccessStatusError.SUCCESS
             raise CustomExitException
         except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'secondaryButton': {exc}")
+            logger.error("Ошибка при нажатии на кнопку 'secondaryButton': %s", exc)
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             raise
 
@@ -211,7 +210,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable(
                     (By.ID, 'lightbox-cover'))).click()
         except Exception as e:
-            logger.error(f"Ошибка при нажатии на элемент 'lightbox-cover': {e}")
+            logger.error("Ошибка при нажатии на элемент 'lightbox-cover': %s", e)
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             raise
 
@@ -224,7 +223,7 @@ class SeleniumConfirmation:
                     ec.element_to_be_clickable(
                         (By.ID, 'iShowSkip'))).click()
         except Exception as exc:
-            logger.error(f"Ошибка при нажатии на кнопку 'iShowSkip': {exc}")
+            logger.error("Ошибка при нажатии на кнопку 'iShowSkip': %s", exc)
 
 
     def find_page(self):
@@ -242,20 +241,20 @@ class SeleniumConfirmation:
                 self.driver.find_element(By.ID, 'passwordEntry')
                 self.check_password()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
                 self.driver.find_element(By.XPATH, "//*[text()='Other ways to sign in']")
                 self.check_other_login()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
                 self.driver.find_element(By.XPATH, "//*[text()='Use your password']")
                 self.check_use_password()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
@@ -263,7 +262,7 @@ class SeleniumConfirmation:
                                          "//*[contains(text(), \"Get a new code from the device you're trying to sign in to and try again\")]")
                 self.check_code_expired()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
@@ -271,7 +270,7 @@ class SeleniumConfirmation:
                                          "//*[contains(text(), \"I have a code\")]")
                 self.check_2fa()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
@@ -279,7 +278,7 @@ class SeleniumConfirmation:
                                          "//*[contains(text(), \"Don't recognize or have any of these\")]")
                 self.check_2fa()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
@@ -287,21 +286,21 @@ class SeleniumConfirmation:
                                          "//*[contains(text(), \"approve request\")]")
                 self.check_2fa()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
                 self.driver.find_element(By.ID, 'lightbox-cover')
                 self.check_authenticator()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
             try:
                 self.driver.find_element(By.CSS_SELECTOR, 'button[data-testid="secondaryButton"]')
                 self.check_stay_log_in()
                 start_time = time.monotonic()
-            except Exception as exc:
+            except Exception:
                 pass
 
 

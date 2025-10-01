@@ -1,5 +1,6 @@
 FROM python:3.13-slim
 
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
@@ -25,20 +26,29 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
+# Установка Google Chrome
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
     > /etc/apt/sources.list.d/google-chrome.list && \
     apt-get update && apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install poetry
+# Установка uv
+RUN pip install uv
 
+# Создание рабочей директории
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock* /app/
+# Создание директории для логов
+RUN mkdir -p /app/logs
 
-RUN poetry install --no-root --no-interaction
+# Копирование файлов зависимостей
+COPY pyproject.toml uv.lock ./
 
+# Установка зависимостей
+RUN uv sync --frozen
+
+# Копирование исходного кода
 COPY . .
 
-CMD ["poetry", "run", "python", "main.py"]
+CMD ["uv", "run", "python", "main.py"]

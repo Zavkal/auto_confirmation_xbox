@@ -91,6 +91,12 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
+# Poetry
+poetry.lock
+
+# uv
+# Note: uv.lock should be committed to version control
+
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
@@ -135,3 +141,4 @@ dmypy.json
 db.db
 
 .ruff_cache
+uv.lock
