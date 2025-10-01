@@ -42,13 +42,10 @@ WORKDIR /app
 # Создание директории для логов
 RUN mkdir -p /app/logs
 
-# Копирование файлов зависимостей
-COPY pyproject.toml uv.lock ./
-
-# Установка зависимостей
-RUN uv sync --frozen
-
-# Копирование исходного кода
+# Копирование исходного кода (включая pyproject.toml и, при наличии, uv.lock)
 COPY . .
+
+# Установка зависимостей (используем lock-файл, если он присутствует)
+RUN if [ -f uv.lock ]; then uv sync --frozen; else uv sync; fi
 
 CMD ["uv", "run", "python", "main.py"]
