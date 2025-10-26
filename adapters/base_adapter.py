@@ -224,7 +224,24 @@ class SeleniumConfirmation:
                         (By.ID, 'iShowSkip'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'iShowSkip': %s", exc)
+    
 
+    def check_faq_button(self):
+        try:
+            WebDriverWait(self.driver, 5).until(
+                ec.element_to_be_clickable(
+                    (By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))).click()
+        except Exception as exc:
+            logger.error("Ошибка при нажатии на кнопку 'Далее при подтвержеднии условий': %s", exc)
+
+
+    def security_info_accurate(self):
+        try:
+            WebDriverWait(self.driver, 5).until(
+                ec.element_to_be_clickable(
+                    (By.ID, 'iLooksGood'))).click()
+        except Exception as exc:
+            logger.error("Ошибка при нажатии на кнопку 'iLooksGood': %s", exc)
 
     def find_page(self):
         timeout = 10
@@ -303,8 +320,26 @@ class SeleniumConfirmation:
             except Exception:
                 pass
 
+            try:
+                self.driver.find_element(By.ID, 'iShowSkip')
+                self.check_recovery_mail()
+                start_time = time.monotonic()
+            except Exception:
+                pass
 
+            try:
+                self.driver.find_element(By.ID, 'iLooksGood')
+                self.security_info_accurate()
+                start_time = time.monotonic()
+            except Exception:
+                pass
 
+            try:
+                self.driver.find_element(By.CSS_SELECTOR, 'button[data-testid="primaryButton')
+                self.check_faq_button()
+                start_time = time.monotonic()
+            except Exception:
+                pass
 
 
 

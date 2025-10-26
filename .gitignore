@@ -142,3 +142,4 @@ db.db
 
 .ruff_cache
 uv.lock
+.vscode/
