@@ -46,13 +46,15 @@ class SeleniumConfirmation:
 
     def create_screenshot(self):
         """Сохраняет скриншот в папку screenshots/ (создаёт её если нет)."""
-        os.makedirs('screenshots', exist_ok=True)
-        filename = os.path.join('screenshots', datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '_debug_screenshot.png')
-        try:
-            self.driver.save_screenshot(filename)
-            logger.info(f"Скриншот сохранён: {filename}")
-        except Exception as exc:
-            logger.error(f"Ошибка при создании скриншота: {exc}")
+        debug = False
+        if debug:
+            os.makedirs('screenshots', exist_ok=True)
+            filename = os.path.join('screenshots', datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '_debug_screenshot.png')
+            try:
+                self.driver.save_screenshot(filename)
+                logger.info(f"Скриншот сохранён: {filename}")
+            except Exception as exc:
+                logger.error(f"Ошибка при создании скриншота: {exc}")
 
 
     def confirmation_code(self, data: dict[str, Any]) -> None:
