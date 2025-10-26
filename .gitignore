@@ -143,3 +143,7 @@ db.db
 .ruff_cache
 uv.lock
 .vscode/
+
+# Screenshots and logs
+screenshots/
+logs/

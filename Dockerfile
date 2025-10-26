@@ -40,13 +40,14 @@ RUN pip install uv
 # Создание рабочей директории
 WORKDIR /app
 
-# Создание директории для логов
-RUN mkdir -p /app/logs
+# Создание директорий для логов и скриншотов
+RUN mkdir -p /app/logs /app/screenshots
 
-# Копирование исходного кода (включая pyproject.toml и, при наличии, uv.lock)
-COPY . .
+# Копирование только файлов зависимостей для кэширования слоёв
+COPY pyproject.toml uv.lock* ./
 
 # Установка зависимостей (используем lock-файл, если он присутствует)
 RUN if [ -f uv.lock ]; then uv sync --frozen; else uv sync; fi
 
+# Точка входа будет использовать код из volume mount
 CMD ["uv", "run", "python", "main.py"]
