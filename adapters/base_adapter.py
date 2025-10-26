@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import shutil
 import tempfile
@@ -42,6 +43,9 @@ class SeleniumConfirmation:
             logger.error("Ошибка при удалении временной папки: %s", exc)
 
 
+    def create_screenshot(self):
+        self.driver.save_screenshot(datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + 'debug_screenshot.png')
+
 
     def confirmation_code(self, data: dict[str, Any]) -> None:
         self.entity = AccessResponseQueueEntity(**data)
@@ -73,6 +77,7 @@ class SeleniumConfirmation:
             self.find_page()
 
         finally:
+            self.create_screenshot()
             self.publisher.publish(entity=self.entity)
 
 
@@ -95,9 +100,11 @@ class SeleniumConfirmation:
                      "//*[contains(text(), \"Check the code and try again\")]")))
             logging.error('Ошибка: Код не верный')
             self.entity.error = AccessStatusError.CODE_ERROR
+            self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
             logging.error('Ошибка: Ошибка при проверке ошибки %s', exc)
+            self.create_screenshot()
 
 
     def check_email(self):
@@ -114,6 +121,7 @@ class SeleniumConfirmation:
         except Exception as exc:
             logger.error("Ошибка при вводе email: %s", exc)
             self.entity.error = AccessStatusError.EMAIL_ERROR
+            self.create_screenshot()
             raise
 
         try:
@@ -121,9 +129,11 @@ class SeleniumConfirmation:
                 ec.visibility_of_element_located((By.XPATH,
                                                   "//*[contains(text(), \"Try entering your details again, or create an account\")]")))
             self.entity.error = AccessStatusError.EMAIL_ERROR
+            self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
             logger.error("Ошибка при проверке наличия ошибки: %s", exc)
+            self.create_screenshot()
 
 
     def check_password(self):
@@ -138,6 +148,7 @@ class SeleniumConfirmation:
         except Exception as exc:
             logger.error("Ошибка при вводе пароля %s", exc)
             self.entity.error = AccessStatusError.PASSWORD_ERROR
+            self.create_screenshot()
             raise
 
         try:
@@ -145,10 +156,11 @@ class SeleniumConfirmation:
                                      "//*[contains(text(), \"password is incorrect\")]")
             self.entity.error = AccessStatusError.PASSWORD_ERROR
             logger.error("Ошибка пароля")
+            self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
             logger.error("Ошибка при проверке наличия ошибки: %s", exc)
-
+            self.create_screenshot()
 
     def check_other_login(self):
         try:
@@ -157,7 +169,7 @@ class SeleniumConfirmation:
             ).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'Другие способы входа': %s", exc)
-
+            self.create_screenshot()
 
     def check_use_password(self):
         try:
@@ -166,26 +178,28 @@ class SeleniumConfirmation:
             ).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'Используйте свой пароль': %s", exc)
-
+            self.create_screenshot()
 
     def check_code_expired(self):
         try:
             self.driver.find_element(By.XPATH,
                                      "//*[contains(text(), \"Get a new code from the device you're trying to sign in to and try again\")]")
             self.entity.error = AccessStatusError.CODE_ERROR
+            self.create_screenshot()
             logger.error("Ошибка: Введенный код истек")
             raise CustomExitException
         except Exception as exc:
             logger.error("Ошибка при проверке наличия ошибки: %s", exc)
-
+            self.create_screenshot()
 
     def check_2fa(self):
         try:
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
+            self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
             logger.error("Ошибка при проверке наличия ошибки: %s", exc)
-
+            self.create_screenshot()
 
     def check_stay_log_in(self):
         try:
@@ -200,6 +214,7 @@ class SeleniumConfirmation:
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'secondaryButton': %s", exc)
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
+            self.create_screenshot()
             raise
 
 
@@ -212,6 +227,7 @@ class SeleniumConfirmation:
         except Exception as e:
             logger.error("Ошибка при нажатии на элемент 'lightbox-cover': %s", e)
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
+            self.create_screenshot()
             raise
 
 
@@ -224,7 +240,8 @@ class SeleniumConfirmation:
                         (By.ID, 'iShowSkip'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'iShowSkip': %s", exc)
-    
+            self.create_screenshot()
+
 
     def check_faq_button(self):
         try:
@@ -233,6 +250,7 @@ class SeleniumConfirmation:
                     (By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'Далее при подтвержеднии условий': %s", exc)
+            self.create_screenshot()
 
 
     def security_info_accurate(self):
@@ -242,9 +260,11 @@ class SeleniumConfirmation:
                     (By.ID, 'iLooksGood'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'iLooksGood': %s", exc)
+            self.create_screenshot()
+
 
     def find_page(self):
-        timeout = 10
+        timeout = 15
         start_time = time.monotonic()
 
         while True:
@@ -252,6 +272,7 @@ class SeleniumConfirmation:
             if time.monotonic() - start_time > timeout:
                 logger.info("Таймер истёк. Прекращаем попытки.")
                 self.entity.error = AccessStatusError.UNKNOWN_ERROR
+                self.create_screenshot()
                 break
 
             try:
@@ -342,17 +363,23 @@ class SeleniumConfirmation:
                 pass
 
 
+class Ass:
 
+    def publish(self, *args, **kwargs):
+        pass
+    
+    def close_connection(self, *args, **kwargs):
+        pass
 
 if __name__ == '__main__':
-    SeleniumConfirmation().confirmation_code(
+    SeleniumConfirmation(publisher=Ass()).confirmation_code(
         data={
-    "code": "FGNR8UPN",
+    "code": "YSM36PYT",
     "user_id": 1854450669,
     "product_id": "61",
     "order_id": 1581,
-    "login": "Diablo2rent@outlook.com",
-    "password": "rent2222",
+    "login": "avatarrent@ya.ru",
+    "password": "box76543",
     "user_message_id": 36112,
     "product_title": "Forza Horizon 3",
     "back_from": "delivery",
