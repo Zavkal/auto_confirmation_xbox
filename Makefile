@@ -65,7 +65,8 @@ down: ## Остановить контейнер
 # Перезапуск контейнера
 restart: ## Перезапустить контейнер
 	@echo "$(BLUE)Перезапуск контейнера...$(NC)"
-	docker compose restart
+	docker compose down
+	docker compose up -d
 	@echo "$(GREEN)Контейнер перезапущен!$(NC)"
 
 # Просмотр логов
