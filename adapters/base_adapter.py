@@ -46,7 +46,7 @@ class SeleniumConfirmation:
 
     def create_screenshot(self):
         """Сохраняет скриншот в папку screenshots/ (создаёт её если нет)."""
-        debug = True
+        debug = False
         if debug:
             os.makedirs('screenshots', exist_ok=True)
             filename = os.path.join('screenshots', datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '_debug_screenshot.png')
