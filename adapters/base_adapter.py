@@ -18,6 +18,11 @@ from rabbit.send_result import AccessResponsePublisher
 logger = logging.getLogger(__name__)
 
 
+def _short_exception(exc: Exception) -> str:
+    text = str(exc)
+    return text.split("Stacktrace:")[0].strip()
+
+
 class CustomExitException(BaseException):
     pass
 
@@ -41,7 +46,7 @@ class SeleniumConfirmation:
         try:
             shutil.rmtree(self.user_data_dir, ignore_errors=True)
         except Exception as exc:
-            logger.error("Ошибка при удалении временной папки: %s", exc)
+            logger.error("Ошибка при удалении временной папки: %s", _short_exception(exc))
 
 
     def create_screenshot(self):
@@ -54,7 +59,7 @@ class SeleniumConfirmation:
                 self.driver.save_screenshot(filename)
                 logger.info(f"Скриншот сохранён: {filename}")
             except Exception as exc:
-                logger.error(f"Ошибка при создании скриншота: {exc}")
+                logger.error("Ошибка при создании скриншота: %s", _short_exception(exc))
 
 
     def confirmation_code(self, data: dict[str, Any]) -> None:
@@ -67,7 +72,7 @@ class SeleniumConfirmation:
             self.new_site()
 
         except Exception as exc:
-            logger.error("Ошибка при открытии страницы для входа в xbox %s", exc)
+            logger.error("Ошибка при открытии страницы для входа в xbox %s", _short_exception(exc))
             self.entity.error = AccessStatusError.SITE_ERROR
             self.publisher.publish(entity=self.entity)
             return
@@ -99,7 +104,7 @@ class SeleniumConfirmation:
             self.driver.find_element(By.ID, 'otc').send_keys(self.entity.code)
             self.driver.find_element(By.ID, 'idSIButton9').click()
         except Exception as exc:
-            logging.error('Ошибка: Ошибка при вводе кода %s', exc)
+            logging.error('Ошибка: Ошибка при вводе кода %s', _short_exception(exc))
             self.entity.error = AccessStatusError.CODE_ERROR
             raise
 
@@ -113,7 +118,7 @@ class SeleniumConfirmation:
             self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
-            logging.error('Ошибка: Ошибка при проверке ошибки %s', exc)
+            logging.error('Ошибка: Ошибка при проверке ошибки %s', _short_exception(exc))
             self.create_screenshot()
 
 
@@ -129,7 +134,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
             ).click()
         except Exception as exc:
-            logger.error("Ошибка при вводе email: %s", exc)
+            logger.error("Ошибка при вводе email: %s", _short_exception(exc))
             self.entity.error = AccessStatusError.EMAIL_ERROR
             self.create_screenshot()
             raise
@@ -142,7 +147,7 @@ class SeleniumConfirmation:
             self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
-            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
+            logger.error("Ошибка при проверке наличия ошибки: %s", _short_exception(exc))
             self.create_screenshot()
 
 
@@ -156,7 +161,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))
             ).click()
         except Exception as exc:
-            logger.error("Ошибка при вводе пароля %s", exc)
+            logger.error("Ошибка при вводе пароля %s", _short_exception(exc))
             self.entity.error = AccessStatusError.PASSWORD_ERROR
             self.create_screenshot()
             raise
@@ -169,7 +174,7 @@ class SeleniumConfirmation:
             self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
-            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
+            logger.error("Ошибка при проверке наличия ошибки: %s", _short_exception(exc))
             self.create_screenshot()
 
     def check_other_login(self):
@@ -178,7 +183,7 @@ class SeleniumConfirmation:
                 ec.visibility_of_element_located((By.XPATH, "//*[text()='Other ways to sign in']"))
             ).click()
         except Exception as exc:
-            logger.error("Ошибка при нажатии на кнопку 'Другие способы входа': %s", exc)
+            logger.error("Ошибка при нажатии на кнопку 'Другие способы входа': %s", _short_exception(exc))
             self.create_screenshot()
 
     def check_use_password(self):
@@ -187,7 +192,7 @@ class SeleniumConfirmation:
                 ec.visibility_of_element_located((By.XPATH, "//*[text()='Use your password']"))
             ).click()
         except Exception as exc:
-            logger.error("Ошибка при нажатии на кнопку 'Используйте свой пароль': %s", exc)
+            logger.error("Ошибка при нажатии на кнопку 'Используйте свой пароль': %s", _short_exception(exc))
             self.create_screenshot()
 
     def check_code_expired(self):
@@ -199,7 +204,7 @@ class SeleniumConfirmation:
             logger.error("Ошибка: Введенный код истек")
             raise CustomExitException
         except Exception as exc:
-            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
+            logger.error("Ошибка при проверке наличия ошибки: %s", _short_exception(exc))
             self.create_screenshot()
 
     def check_2fa(self):
@@ -208,7 +213,7 @@ class SeleniumConfirmation:
             self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
-            logger.error("Ошибка при проверке наличия ошибки: %s", exc)
+            logger.error("Ошибка при проверке наличия ошибки: %s", _short_exception(exc))
             self.create_screenshot()
 
     def check_stay_log_in(self):
@@ -222,7 +227,7 @@ class SeleniumConfirmation:
             self.entity.error = AccessStatusError.SUCCESS
             raise CustomExitException
         except Exception as exc:
-            logger.error("Ошибка при нажатии на кнопку 'secondaryButton': %s", exc)
+            logger.error("Ошибка при нажатии на кнопку 'secondaryButton': %s", _short_exception(exc))
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             self.create_screenshot()
             raise
@@ -235,7 +240,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable(
                     (By.ID, 'lightbox-cover'))).click()
         except Exception as e:
-            logger.error("Ошибка при нажатии на элемент 'lightbox-cover': %s", e)
+            logger.error("Ошибка при нажатии на элемент 'lightbox-cover': %s", _short_exception(e))
             self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
             self.create_screenshot()
             raise
@@ -249,7 +254,7 @@ class SeleniumConfirmation:
                     ec.element_to_be_clickable(
                         (By.ID, 'iShowSkip'))).click()
         except Exception as exc:
-            logger.error("Ошибка при нажатии на кнопку 'iShowSkip': %s", exc)
+            logger.error("Ошибка при нажатии на кнопку 'iShowSkip': %s", _short_exception(exc))
             self.create_screenshot()
 
 
@@ -259,7 +264,7 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable(
                     (By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))).click()
         except Exception as exc:
-            logger.error("Ошибка при нажатии на кнопку 'Далее при подтвержеднии условий': %s", exc)
+            logger.error("Ошибка при нажатии на кнопку 'Далее при подтвержеднии условий': %s", _short_exception(exc))
             self.create_screenshot()
 
 
@@ -269,17 +274,28 @@ class SeleniumConfirmation:
                 ec.element_to_be_clickable(
                     (By.ID, 'iLooksGood'))).click()
         except Exception as exc:
-            logger.error("Ошибка при нажатии на кнопку 'iLooksGood': %s", exc)
+            logger.error("Ошибка при нажатии на кнопку 'iLooksGood': %s", _short_exception(exc))
             self.create_screenshot()
 
 
     def find_page(self):
-        timeout = 15
+        timeout = 15  # локальный таймаут между событиями
+        max_total_time = 60  # общий таймаут на одну попытку входа, сек
         start_time = time.monotonic()
+        overall_start_time = start_time
 
         while True:
-            # Проверяем таймаут
-            if time.monotonic() - start_time > timeout:
+            now = time.monotonic()
+
+            # Проверяем общий таймаут
+            if now - overall_start_time > max_total_time:
+                logger.info("Общий таймер входа истёк. Прекращаем попытки.")
+                self.entity.error = AccessStatusError.UNKNOWN_ERROR
+                self.create_screenshot()
+                break
+
+            # Проверяем локальный таймаут
+            if now - start_time > timeout:
                 logger.info("Таймер истёк. Прекращаем попытки.")
                 self.entity.error = AccessStatusError.UNKNOWN_ERROR
                 self.create_screenshot()
@@ -371,6 +387,8 @@ class SeleniumConfirmation:
                 start_time = time.monotonic()
             except Exception:
                 pass
+
+            time.sleep(0.5)
 
 
 class Ass:

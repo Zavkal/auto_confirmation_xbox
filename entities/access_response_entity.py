@@ -8,6 +8,7 @@ class AccessStatusError(IntEnum):
     AUTHENTICATOR_ERROR = 2  # => Ошибка аутентификатора
     PASSWORD_ERROR = 3  # => Ошибка пароля
     EMAIL_ERROR = 4  # => Ошибка почты
+    CIRCULAR_WAIT_ERROR = 5  # => Ошибка циклического ожидания страницы
     UNKNOWN_ERROR = 8  # => Неизвестная ошибка
     SITE_ERROR = 9  # => Ошибка сайта
     IN_PROGRESS = 10  # => В работе
