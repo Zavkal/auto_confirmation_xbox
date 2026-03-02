@@ -2,7 +2,7 @@ services:
   auto-confirmation:
     build: .
     container_name: auto_confirmation_xbox_consumer
-    restart: restart
+    restart: always
     env_file:
       - .env
     volumes:
