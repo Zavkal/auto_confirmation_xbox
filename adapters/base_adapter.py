@@ -208,7 +208,7 @@ class SeleniumConfirmation:
 
     def check_2fa(self):
         try:
-            self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
+            self.entity.error = AccessStatusError.TWO_FA_ERROR
             self.create_screenshot()
             raise CustomExitException
         except Exception as exc:
@@ -227,7 +227,7 @@ class SeleniumConfirmation:
             raise CustomExitException
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'secondaryButton': %s", _short_exception(exc))
-            self.entity.error = AccessStatusError.AUTHENTICATOR_ERROR
+            self.entity.error = AccessStatusError.STAY_LOG_IN_ERROR
             self.create_screenshot()
             raise
 
@@ -254,6 +254,7 @@ class SeleniumConfirmation:
                         (By.ID, 'iShowSkip'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'iShowSkip': %s", _short_exception(exc))
+            self.entity.error = AccessStatusError.CHECK_RECOVERY_MAIL_ERROR
             self.create_screenshot()
 
 
@@ -264,6 +265,7 @@ class SeleniumConfirmation:
                     (By.CSS_SELECTOR, 'button[data-testid="primaryButton"]'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'Далее при подтвержеднии условий': %s", _short_exception(exc))
+            self.entity.error = AccessStatusError.FAQ_BUTTON_ERROR
             self.create_screenshot()
 
 
@@ -274,6 +276,7 @@ class SeleniumConfirmation:
                     (By.ID, 'iLooksGood'))).click()
         except Exception as exc:
             logger.error("Ошибка при нажатии на кнопку 'iLooksGood': %s", _short_exception(exc))
+            self.entity.error = AccessStatusError.SECURITY_INFO_ACCURATE_ERROR
             self.create_screenshot()
 
 
@@ -391,6 +394,14 @@ class SeleniumConfirmation:
                 self.driver.find_element(By.CSS_SELECTOR, 'button[data-testid="primaryButton')
                 self.check_faq_button()
                 start_time = time.monotonic()
+            except Exception:
+                pass
+
+            try:
+                self.driver.find_element(By.ID, 'idDiv_Finish_Title')
+                self.entity.success = AccessStatusSolution.SUCCESS
+                self.entity.error = AccessStatusError.SUCCESS
+                raise CustomExitException
             except Exception:
                 pass
 

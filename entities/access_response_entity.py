@@ -5,12 +5,19 @@ from enum import IntEnum, StrEnum
 class AccessStatusError(IntEnum):
     SUCCESS = 0  # => Успешно
     CODE_ERROR = 1  # => Ошибка при вводе кода или пароля
-    AUTHENTICATOR_ERROR = 2  # => Ошибка аутентификатора
+    TWO_FA_ERROR = 2  # => Ошибка двухфакторной аутентификации
     PASSWORD_ERROR = 3  # => Ошибка пароля
     EMAIL_ERROR = 4  # => Ошибка почты
     CIRCULAR_WAIT_ERROR = 5  # => Ошибка циклического ожидания страницы
+    STAY_LOG_IN_ERROR = 6  # => Ошибка остаться в системе
+    AUTHENTICATOR_ERROR = 7  # => Ошибка аутентификатора
     UNKNOWN_ERROR = 8  # => Неизвестная ошибка
     SITE_ERROR = 9  # => Ошибка сайта
+    CHECK_RECOVERY_MAIL_ERROR = 11  # => Ошибка проверки резервной почты
+    FAQ_BUTTON_ERROR = 12  # => Ошибка кнопки 'Далее при подтвержедении условий'
+    SECURITY_INFO_ACCURATE_ERROR = 13  # => Ошибка кнопки 'iLooksGood'
+
+
     IN_PROGRESS = 10  # => В работе
 
 
