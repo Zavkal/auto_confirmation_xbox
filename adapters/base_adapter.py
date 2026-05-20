@@ -88,7 +88,6 @@ class SeleniumConfirmation:
     def new_site(self) -> None:
         try:
             self.check_code()
-            self.check_email()
             self.find_page()
 
         finally:
@@ -300,6 +299,13 @@ class SeleniumConfirmation:
                 self.entity.error = AccessStatusError.UNKNOWN_ERROR
                 self.create_screenshot()
                 break
+
+            try:
+                self.driver.find_element(By.ID, 'usernameEntry')
+                self.check_email()
+                start_time = time.monotonic()
+            except Exception:
+                pass
 
             try:
                 self.driver.find_element(By.ID, 'passwordEntry')
