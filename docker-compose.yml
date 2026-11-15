@@ -1,0 +1,10 @@
+services:
+  auto-confirmation:
+    build: .
+    container_name: auto_confirmation_xbox_consumer
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      # Монтируем весь проект целиком
+      - .:/app
