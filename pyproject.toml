@@ -5,7 +5,6 @@ description = "Xbox account auto-confirmation service"
 authors = [
     {name = "Zavkal", email = "ivanovilya14122000@yandex.ru"}
 ]
-readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "selenium>=4.15.0,<5.0.0",
