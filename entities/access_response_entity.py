@@ -41,6 +41,7 @@ class AccessResponseQueueEntity:
     product_title: str
     back_from: str
     subs_period_id: int | None = None
+    auth_base_code: str | None = None
     success:  str | None = None
     error:  int | None = None
 
