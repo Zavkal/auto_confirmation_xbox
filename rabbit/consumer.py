@@ -2,9 +2,8 @@ import logging
 import time
 import pika
 from pika.exceptions import AMQPConnectionError, StreamLostError, ConnectionClosedByClient, ChannelClosedByBroker
-from config import IMAP_EMAIL, IMAP_PASS, RABBITMQ_QUEUE_REQUEST, parameters
+from config import RABBITMQ_QUEUE_REQUEST, parameters
 from rabbit.process_mq import process_message
-from src.get_last_mail_service import GetLastMailService
 
 
 logger = logging.getLogger(__name__)
@@ -15,8 +14,6 @@ def rabbitmq_consumer() -> None:
     Основная функция consumer'а с автоматическим переподключением
     """
     retry_delay = 5  # секунд
-
-    GetLastMailService().prime({"email": IMAP_EMAIL, "password": IMAP_PASS})
 
     while True:
         try:

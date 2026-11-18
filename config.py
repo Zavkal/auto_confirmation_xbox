@@ -11,10 +11,6 @@ RABBITMQ_HOST = str(os.getenv("RABBITMQ_HOST"))
 RABBITMQ_QUEUE_REQUEST = str(os.getenv("RABBITMQ_QUEUE_REQUEST"))
 RABBITMQ_QUEUE_RESPONSE = str(os.getenv("RABBITMQ_QUEUE_RESPONSE"))
 
-RECOVERY_EMAIL = str(os.getenv("RECOVERY_EMAIL"))
-IMAP_EMAIL = str(os.getenv("IMAP_EMAIL"))
-IMAP_PASS = str(os.getenv("IMAP_PASS"))
-
 credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
 parameters = pika.ConnectionParameters(
     host=RABBITMQ_HOST,
