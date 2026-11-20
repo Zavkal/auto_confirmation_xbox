@@ -75,6 +75,12 @@ class SeleniumConfirmation:
         self.entity.success = AccessStatusSolution.ERROR
         self.publisher.publish(entity=self.entity)
         try:
+            if not (self.entity.auth_base_code or "").strip():
+                logger.error("auth_base_code пустой — завершаем вход")
+                time.sleep(3)
+                self.entity.error = AccessStatusError.OLD_LOGIN_METHOD_ERROR
+                self.publisher.publish(entity=self.entity)
+                return
             self.driver.get('https://login.live.com/oauth20_remoteconnect.srf')
             self.new_site()
 
@@ -361,52 +367,14 @@ class SeleniumConfirmation:
             except ElementClickInterceptedException:
                 self.driver.execute_script("arguments[0].click();", element)
 
-    def _is_approve_sign_in_page(self) -> bool:
-        if self._first_visible(
-            By.XPATH,
-            "//*[(self::button or @role='button')]"
-            "[contains(normalize-space(.), 'Approve sign-in with a mobile app')]",
-        ):
-            return False
-        return bool(
-            self._first_visible(
-                By.XPATH,
-                "//*[contains(translate(., 'APPROVE', 'approve'), 'approve') and "
-                "contains(translate(., 'REQUEST', 'request'), 'request')]",
-            )
-            or self._first_visible(By.XPATH, "//*[contains(., 'Are you trying to sign in')]")
-        )
-
     def find_page(self):
         timeout = 15
         max_total_time = 60
-        approve_wait_timeout = 10
         start_time = time.monotonic()
         overall_start_time = start_time
-        approve_wait_started = None
 
         while True:
             now = time.monotonic()
-            waiting_approve = self._is_approve_sign_in_page()
-
-            if waiting_approve:
-                if approve_wait_started is None:
-                    approve_wait_started = now
-                    logger.info("Ожидание одобрения входа %s сек", approve_wait_timeout)
-                    self.entity.error = AccessStatusError.APPROVE_SIGN_IN
-                    self.entity.success = AccessStatusSolution.ERROR
-                    self.publisher.publish(entity=self.entity)
-                start_time = now
-                if now - approve_wait_started > approve_wait_timeout:
-                    logger.info("Вход не одобрили за %s сек", approve_wait_timeout)
-                    self.entity.error = AccessStatusError.LOGIN_NOT_COMPLETED
-                    self.entity.success = AccessStatusSolution.ERROR
-                    self.create_screenshot()
-                    raise CustomExitException
-                time.sleep(0.5)
-                continue
-
-            approve_wait_started = None
             if now - overall_start_time > max_total_time:
                 logger.info("Общий таймер входа истёк. Прекращаем попытки.")
                 self.entity.error = AccessStatusError.UNKNOWN_ERROR
@@ -449,6 +417,10 @@ class SeleniumConfirmation:
             if self._is_totp_window():
                 self.enter_authenticator_code()
                 start_time = time.monotonic()
+                continue
+
+            if not self._totp_submitted:
+                time.sleep(0.5)
                 continue
 
             try:
